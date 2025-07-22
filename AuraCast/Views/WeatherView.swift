@@ -11,10 +11,16 @@ struct WeatherView: View {
     var weather: ResponseBody
     
     var body: some View {
-        VStack {
-            Text(weather.location.name)
-            Text("\(weather.current.temp_c, specifier: "%.1f")°C")
-            Text(weather.current.condition.text)
+        ZStack {
+            Image(backgroundImageName(for: weather.current.condition.text))
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+            VStack {
+                Text(weather.location.name)
+                Text("\(weather.current.temp_c, specifier: "%.1f")°C")
+                Text(weather.current.condition.text)
+            }
         }
     }
 }
