@@ -10,6 +10,8 @@ import SwiftUI
 
 struct WelcomeView: View {
     @State private var showNext = false
+    @State private var zoomTrigger = false
+    @State private var hideUI = false
 
     var body: some View {
         if showNext{
@@ -18,37 +20,59 @@ struct WelcomeView: View {
             ZStack {
                 Image("aura_cast")
                 .resizable()
-                .scaledToFill()
                 .ignoresSafeArea()
-                VStack {
-                    VStack(spacing: 10){
-                        Text("Welcome to")
-                            .font(.system(size: 50))
-                        Text("AuraCast")
-                            .font(.system(size: 40).italic())
-                            .padding()
-                        Text("The app that will show you just what you trully need")
-                            .font(.system(size: 20).italic())
-                    }
-                    .multilineTextAlignment(.center)
-                    .padding()
-                    
-                    Button(action: {
-                        withAnimation {
-                            showNext = true
+                .zoomEffect(trigger: zoomTrigger, scale: 7.0, duration: 0.5)
+                if !hideUI {
+                    VStack {
+                        Spacer().frame(height: 60)
+                        VStack(){
+                            Text("Weather, reimagined.")
+                                .font(.system(size: 30))
+                                .fontWeight(.ultraLight)
+                                .foregroundColor(.white)
+                                .shadow(radius: 5)
+                                .padding()
                         }
-                    }) {
-                        HStack {
-                            Text("Get Started")
-                            Image(systemName: "arrow.right")
+                        VStack(){
+                            Text("AuraCast")
+                                .font(.system(size: 40))
+                                .fontWeight(.ultraLight)
+                                .italic()
+                                .foregroundColor(.white)
+                                .shadow(radius: 5)
+                                .padding()
                         }
+                        .multilineTextAlignment(.center)
                         .padding()
-                        .foregroundColor(.white)
-                        .background(Color.red)
-                        .cornerRadius(12)
+                        .padding(.top, 90)
+                        VStack{
+                            Spacer().frame(height: 70)
+                            
+                            Button(action: {
+                                hideUI = true
+                                zoomTrigger = true
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8){
+                                    withAnimation {
+                                        showNext = true
+                                    }
+                                }}) {
+                                    HStack {
+                                        //Text("Get Started")
+                                        Image(systemName: "arrow.right")
+                                            .shadow(radius: 5)
+                                    }
+                                    
+                                    .padding()
+                                    .foregroundColor(.white)
+                                    .background(Color.drop)
+                                    .cornerRadius(100)
+                                    .shadow(color: Color.blue.opacity(0.5) ,radius: 10)
+                                }
+                        }
+                        Spacer().frame(height: 100)
                     }
                 }
-            }
+             }
             }
         }
             
