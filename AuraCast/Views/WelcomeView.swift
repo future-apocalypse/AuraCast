@@ -24,13 +24,12 @@ struct WelcomeView: View {
                 .zoomEffect(trigger: zoomTrigger, scale: 7.0, duration: 0.5)
                 if !hideUI {
                     VStack {
-                        Spacer().frame(height: 60)
+                        Spacer().frame(height: 10)
                         VStack(){
-                            Text("Weather, reimagined.")
+                            Text("WEATHER, REIMAGINED.")
                                 .font(.system(size: 30))
-                                .fontWeight(.ultraLight)
+                                .fontWeight(.light)
                                 .foregroundColor(.white)
-                                .shadow(radius: 5)
                                 .padding()
                         }
                         VStack(){
@@ -44,9 +43,10 @@ struct WelcomeView: View {
                         }
                         .multilineTextAlignment(.center)
                         .padding()
-                        .padding(.top, 90)
+                        .padding(.top, 50)
+                        .padding(.bottom, 50)
                         VStack{
-                            Spacer().frame(height: 70)
+                            Spacer().frame(height: 10)
                             
                             Button(action: {
                                 hideUI = true
@@ -62,21 +62,26 @@ struct WelcomeView: View {
                                             .shadow(radius: 5)
                                     }
                                     
-                                    .padding()
+                                    .font(.system(size: 20, weight: .medium, design: .monospaced))
                                     .foregroundColor(.white)
-                                    .background(Color.drop)
-                                    .cornerRadius(100)
-                                    .shadow(color: Color.blue.opacity(0.5) ,radius: 10)
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 14)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 50)
+                                            .stroke(Color.white, lineWidth: 5)
+                                    )
+                            }
+                            .background(Color.clear)
+                            .clipShape(RoundedRectangle(cornerRadius: 50))
                                 }
                         }
-                        Spacer().frame(height: 100)
-                    }
+                       }
                 }
              }
             }
         }
             
-    }
+    
 
 #Preview {
     WelcomeView()
