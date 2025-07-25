@@ -48,7 +48,7 @@ struct FindLocationView: View {
                         .foregroundColor(.white)
                         .shadow(radius: 5)
                         .padding(.top)
-                    
+                        
                     // Use current location
                         .padding(.bottom, 50)
                     Button(action: {
@@ -67,25 +67,7 @@ struct FindLocationView: View {
                     .background(Color.clear)
                     .clipShape(RoundedRectangle(cornerRadius: 50))
                     Spacer()
-//                    Text("or")
-//                        .foregroundColor(.black)
-//                    
-//                    // Manual city input
-//                    TextField("Enter a city name", text: $cityName)
-//                        .textFieldStyle(.roundedBorder)
-//                        .padding(.horizontal)
-//                    
-//                    Button("Search") {
-//                        Task {
-//                            await fetchWeather()
-//                        }
-//                    }
-//                    .padding()
-//                    .background(Color.blue)
-//                    .foregroundColor(.white)
-//                    .cornerRadius(10)
-                    
-                    
+
                     if isLoading {
                         ProgressView("Fetching...")
                     }
@@ -95,6 +77,7 @@ struct FindLocationView: View {
                             .foregroundColor(.red)
                     }
                 }
+                .multilineTextAlignment(.center)
                 .padding()
             }
         }

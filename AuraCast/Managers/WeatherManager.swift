@@ -45,6 +45,25 @@ class WeatherManager {
 
         return try JSONDecoder().decode(ResponseBody.self, from: data)
     }
+    
+    func get7DayForecast(latitude: CLLocationDegrees, longitude: CLLocationDegrees) async throws -> ForecastResponse {
+        guard let apiKey = Bundle.main.infoDictionary?["WEATHER_API_KEY"] as? String else {
+            fatalError("Missing API Key")
+        }
+
+        let urlString = "https://api.weatherapi.com/v1/forecast.json?key=\(apiKey)&q=\(latitude),\(longitude)&days=7"
+        guard let url = URL(string: urlString) else {
+            fatalError("Invalid URL")
+        }
+
+        let (data, response) = try await URLSession.shared.data(for: URLRequest(url: url))
+
+        guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+            fatalError("Failed to fetch forecast data.")
+        }
+
+        return try JSONDecoder().decode(ForecastResponse.self, from: data)
+    }
 }
 
 
@@ -70,6 +89,8 @@ struct ResponseBody: Codable {
         let wind_kph: Double
         let humidity: Int
         let feelslike_c: Double
+        let uv: Double
+        let precip_mm: Double
     }
 
     struct Condition: Codable {
@@ -77,4 +98,26 @@ struct ResponseBody: Codable {
         let icon: String
         let code: Int
     }
+}
+
+
+struct ForecastResponse: Codable {
+    let forecast: Forecast
+}
+
+struct Forecast: Codable {
+    let forecastday: [ForecastDay]
+}
+
+struct ForecastDay: Codable, Identifiable {
+    let date: String
+    let day: Day
+
+    var id: String { date }
+}
+
+struct Day: Codable {
+    let maxtemp_c: Double
+    let mintemp_c: Double
+    let condition: ResponseBody.Condition
 }
