@@ -8,21 +8,24 @@
 import SwiftUI
 
 struct SearchView: View {
-    @State var presentSheet = false
-    @State private var searchText = ""
-    
-    
+    @Binding var isPresented: Bool
+    @Binding var searchText: String
+    var onCitySelected: (String) -> Void
     
     var body: some View {
-        
-        Button("Modal") {
-            presentSheet = true
-        }
-        .navigationTitle("Main")
-        .sheet(isPresented: $presentSheet) {
-            SearchModalView(searchText: $searchText)
-                .presentationDetents([.medium])
-            
+        NavigationStack {
+            VStack {
+                List {
+                    
+                    Button("Search for \(searchText)") {
+                        onCitySelected(searchText)
+                        isPresented = false
+                    }
+                }
+                .searchable(text: $searchText)
+                .navigationTitle("Search")
+                .navigationBarTitleDisplayMode(.inline)
+            }
         }
     }
 }
@@ -30,14 +33,20 @@ struct SearchView: View {
 struct SearchModalView: View {
     @Binding var searchText: String
     @Environment(\.dismiss) var dismiss
+    var onSearch: (String) -> Void
 
     var body: some View {
         NavigationStack {
             List {
-                Text("Searching for \(searchText)")
+                if !searchText.isEmpty {
+                    Button("Search for \(searchText)") {
+                        onSearch(searchText)
+                        dismiss()
+                    }
+                }
             }
-            .searchable(text: $searchText)
-            .navigationTitle("Location")
+            .searchable(text: $searchText, prompt: "Enter city name")
+            .navigationTitle("Search Location")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -54,6 +63,12 @@ struct SearchModalView: View {
     }
 }
 
-#Preview {
-    SearchView()
+
+struct SearchView_Previews: PreviewProvider {
+    @State static var isPresented = true
+    @State static var searchText = ""
+    static var previews: some View {
+        SearchView(isPresented: $isPresented, searchText: $searchText, onCitySelected: { _ in })
+    }
 }
+

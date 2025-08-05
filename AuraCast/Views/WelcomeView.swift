@@ -57,7 +57,6 @@ struct WelcomeView: View {
                                     }
                                 }}) {
                                     HStack {
-                                        //Text("Get Started")
                                         Image(systemName: "arrow.right")
                                             .shadow(radius: 5)
                                     }

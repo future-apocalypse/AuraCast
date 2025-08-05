@@ -7,23 +7,39 @@
 
 import SwiftUI
 
-import SwiftUI
-
 struct WeatherView: View {
     let weather: ResponseBody
     @State private var forecast: ForecastResponse?
+    @State private var isSearchPresented = false
+    @State private var searchText = ""
     let weatherManager = WeatherManager()
-
+    
     var body: some View {
         ZStack {
             Image(backgroundImageName(for: weather.current.condition.text))
                 .resizable()
                 .scaledToFill()
                 .ignoresSafeArea()
-
+            
             VStack(spacing: 12) {
+                HStack {
+                    Spacer()
+                    Button {
+                        isSearchPresented = true
+                    } label: {
+                        Image(systemName: "magnifyingglass")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                            .padding(10)
+                            .background(.ultraThinMaterial)
+                            .clipShape(Circle())
+                    }
+                    .padding()
+                    .padding(.trailing)
+                }
+                
                 Spacer()
-
+                
                 VStack(spacing: 12) {
                     HStack {
                         Image(systemName: symbolName(for: weather.current.condition.text))
@@ -36,7 +52,7 @@ struct WeatherView: View {
                         VStack(alignment: .leading) {
                             Text(weather.location.name)
                                 .font(.headline)
-
+                            
                             Text(weather.location.localtime.suffix(5))
                                 .font(.caption)
                                 .foregroundColor(.gray)
@@ -48,19 +64,19 @@ struct WeatherView: View {
                         }
                         
                         Spacer()
-
+                        
                         Text("\(Int(weather.current.temp_c.rounded()))°C")
                             .font(.system(size: 42, weight: .light))
                             .padding(.trailing)
                     }
-
+                    
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 5) {
                         InfoBox(icon: "wind", label: "Wind", value: "\(String(format: "%.1f", weather.current.wind_kph)) km/h")
                         InfoBox(icon: "humidity", label: "Humidity", value: "\(weather.current.humidity)%")
                         InfoBox(icon: "sun.max", label: "UV Index", value: "\(String(format: "%.0f", weather.current.uv))")
                         InfoBox(icon: "cloud.rain", label: "Rain", value: "\(String(format: "%.1f", weather.current.precip_mm)) mm")
                     }
-
+                    
                     
                     
                     if let forecast = forecast {
@@ -71,28 +87,36 @@ struct WeatherView: View {
                                         Text(shortDay(for: day.date))
                                             .font(.caption2)
                                             .foregroundColor(.white)
-
+                                        
                                         Image(systemName: symbolName(for: day.day.condition.text))
                                             .resizable()
                                             .scaledToFit()
                                             .frame(width: 30, height: 30)
                                             .foregroundColor(.white)
-
+                                        
                                         Text("\(Int(day.day.maxtemp_c))°")
                                             .font(.footnote)
                                             .foregroundColor(.white)
-
+                                        
                                         Text("\(Int(day.day.mintemp_c))°")
                                             .font(.footnote)
-                                            .foregroundColor(.gray)
+                                            .foregroundColor(.white)
+                                            .opacity(0.5)
                                             .shadow(radius: 3)
                                     }
                                     .padding()
                                     .background(.ultraThinMaterial)
                                     .cornerRadius(16)
                                 }
+                                //MARK: Delete this if your plan is supporting for 10 days.
+                                Text("Only 3-day forecast available in current plan. Upgrade to see a full 7-day forecast.")
+                                    .font(.caption2)
+                                    .foregroundColor(.white)
+                                    .frame(width: 100, height: 100)
+                                
                             }
                             .padding(.leading)
+                            
                         }
                     } else {
                         ProgressView("Loading forecast...")
@@ -103,26 +127,122 @@ struct WeatherView: View {
                 .cornerRadius(30)
                 .shadow(radius: 10)
                 .padding(.horizontal)
-                    
+                
                 
                 .task {
-                        do {
-                            forecast = try await weatherManager.get7DayForecast(
-                                latitude: weather.location.lat,
-                                longitude: weather.location.lon
-                            )
-                        } catch {
-                            print("Forecast error: \(error)")
-                        }
+                    do {
+                        forecast = try await weatherManager.get7DayForecast(
+                            latitude: weather.location.lat,
+                            longitude: weather.location.lon
+                            
+                        )
+                        
+                    } catch {
+                        print("Forecast error: \(error)")
                     }
                 }
-
-                //Spacer()
-                
             }
         }
+        .sheet(isPresented: $isSearchPresented) {
+            SearchModalView(searchText: $searchText, onSearch: { city in
+                Task {
+                    do {
+                        let newWeather = try await weatherManager.getCurrentWeather(forCity: city)
+                        
+                        NotificationCenter.default.post(
+                            name: Notification.Name("WeatherUpdated"),
+                            object: nil,
+                            userInfo: ["weather": newWeather]
+                        )
+                        
+                        
+                        self.forecast = nil
+                        Task {
+                            do {
+                                self.forecast = try await weatherManager.get7DayForecast(
+                                    latitude: newWeather.location.lat,
+                                    longitude: newWeather.location.lon
+                                )
+                            } catch {
+                                print("Forecast error: \(error)")
+                            }
+                        }
+                    } catch {
+                        print("Failed to fetch weather: \(error)")
+                    }
+                }
+            })
+            .presentationDetents([.medium])
+        }
     }
-
+    
+func symbolName(for condition: String) -> String {
+        let lower = condition.lowercased()
+        
+        if lower.contains("sunny") {
+            return "sun.max"
+        } else if lower.contains("partly") && lower.contains("cloudy") {
+            return "cloud.sun"
+        } else if lower.contains("cloudy") {
+            return "cloud"
+        } else if lower.contains("overcast") {
+            return "smoke.fill"
+        } else if lower.contains("clear") {
+            return "moon.stars"
+        } else if lower.contains("rain") || lower.contains("drizzle") {
+            return "cloud.rain"
+        } else if lower.contains("thunder") {
+            return "cloud.bolt.rain"
+        } else if lower.contains("snow") || lower.contains("sleet") {
+            return "snow"
+        } else if lower.contains("mist") || lower.contains("fog") || lower.contains("haze") {
+            return "cloud.fog"
+        } else {
+            return "questionmark.circle"
+        }
+    }
+    
+    struct InfoBox: View {
+        let icon: String
+        let label: String
+        let value: String
+        
+        var body: some View {
+            VStack(alignment: .leading) {
+                Label {
+                    Text(label)
+                } icon: {
+                    Image(systemName: icon)
+                }
+                .font(.caption)
+                
+                Text(value)
+                    .font(.headline)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding()
+            .background(.ultraThinMaterial)
+            .cornerRadius(12)
+        }
+    }
+    
+    func shortDay(for dateString: String) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        guard let date = formatter.date(from: dateString) else { return "" }
+        let outputFormatter = DateFormatter()
+        outputFormatter.dateFormat = "E"
+        return outputFormatter.string(from: date)
+    }
+    
+    func iconForForecast(_ day: Int) -> String {
+        let icons = ["cloud", "cloud.sun", "cloud.bolt", "sun.max", "cloud", "cloud.rain", "cloud.sun"]
+        return icons[day % icons.count]
+    }
+    
+    
+    
+}
 let mockWeather = ResponseBody(
     location: .init(
         name: "Chisinau",
@@ -138,76 +258,11 @@ let mockWeather = ResponseBody(
         wind_kph: 12.3,
         humidity: 68,
         feelslike_c: 27.1,
-        uv: 5.0,            
+        uv: 5.0,
         precip_mm: 0.4
     )
 )
-func symbolName(for condition: String) -> String {
-    let lower = condition.lowercased()
-
-    if lower.contains("sunny") {
-        return "sun.max"
-    } else if lower.contains("partly") && lower.contains("cloudy") {
-        return "cloud.sun"
-    } else if lower.contains("cloudy") {
-        return "cloud"
-    } else if lower.contains("overcast") {
-        return "smoke.fill"
-    } else if lower.contains("clear") {
-        return "moon.stars"
-    } else if lower.contains("rain") || lower.contains("drizzle") {
-        return "cloud.rain"
-    } else if lower.contains("thunder") {
-        return "cloud.bolt.rain"
-    } else if lower.contains("snow") || lower.contains("sleet") {
-        return "snow"
-    } else if lower.contains("mist") || lower.contains("fog") || lower.contains("haze") {
-        return "cloud.fog"
-    } else {
-        return "questionmark.circle"
-    }
-}
-
-struct InfoBox: View {
-    let icon: String
-    let label: String
-    let value: String
-
-    var body: some View {
-        VStack(alignment: .leading) {
-            Label {
-                Text(label)
-            } icon: {
-                Image(systemName: icon)
-            }
-            .font(.caption)
-
-            Text(value)
-                .font(.headline)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(.ultraThinMaterial)
-        .cornerRadius(12)
-    }
-}
-
-func shortDay(for dateString: String) -> String {
-    let formatter = DateFormatter()
-    formatter.dateFormat = "yyyy-MM-dd"
-    guard let date = formatter.date(from: dateString) else { return "" }
-    let outputFormatter = DateFormatter()
-    outputFormatter.dateFormat = "E" // Mon, Tue, etc
-    return outputFormatter.string(from: date)
-}
-
-func iconForForecast(_ day: Int) -> String {
-    // You can replace this with actual forecast icon logic
-    let icons = ["cloud", "cloud.sun", "cloud.bolt", "sun.max", "cloud", "cloud.rain", "cloud.sun"]
-    return icons[day % icons.count]
-}
-
 
 #Preview {
-    WeatherView(weather: mockWeather)
-}
+        WeatherView(weather: mockWeather)
+    }

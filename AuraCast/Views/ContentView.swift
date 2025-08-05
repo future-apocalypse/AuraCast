@@ -14,7 +14,6 @@ struct ContentView: View {
     var weatherManager = WeatherManager()
     @State var weather: ResponseBody?
     
-    
     var body: some View {
         VStack {
             if let location = locationManager.location {
@@ -41,9 +40,25 @@ struct ContentView: View {
                         .environmentObject(locationManager)
                 }
             }
-            
         }
-        //.background(Color.blue)
+        .onAppear {
+            setupWeatherUpdateNotification()
+        }
+        .onDisappear {
+            NotificationCenter.default.removeObserver(self)
+        }
+    }
+    
+    private func setupWeatherUpdateNotification() {
+        NotificationCenter.default.addObserver(
+            forName: Notification.Name("WeatherUpdated"),
+            object: nil,
+            queue: .main
+        ) { notification in
+            if let newWeather = notification.userInfo?["weather"] as? ResponseBody {
+                self.weather = newWeather
+            }
+        }
     }
 }
 
