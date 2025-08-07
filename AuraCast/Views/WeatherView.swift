@@ -55,11 +55,13 @@ struct WeatherView: View {
                             
                             Text(weather.location.localtime.suffix(5))
                                 .font(.caption)
-                                .foregroundColor(.gray)
+                                .foregroundColor(.white)
+                                .opacity(0.5)
                             
                             Text(weather.current.condition.text)
                                 .font(.caption2)
-                                .foregroundColor(.gray)
+                                .foregroundColor(.white)
+                                .opacity(0.5)
                                 .multilineTextAlignment(.center)
                         }
                         
@@ -144,7 +146,10 @@ struct WeatherView: View {
             }
         }
         .sheet(isPresented: $isSearchPresented) {
-            SearchModalView(searchText: $searchText, onSearch: { city in
+            SearchView(
+                isPresented: $isSearchPresented,
+                searchText: $searchText
+            ) { city in
                 Task {
                     do {
                         let newWeather = try await weatherManager.getCurrentWeather(forCity: city)
@@ -155,23 +160,16 @@ struct WeatherView: View {
                             userInfo: ["weather": newWeather]
                         )
                         
-                        
                         self.forecast = nil
-                        Task {
-                            do {
-                                self.forecast = try await weatherManager.get7DayForecast(
-                                    latitude: newWeather.location.lat,
-                                    longitude: newWeather.location.lon
-                                )
-                            } catch {
-                                print("Forecast error: \(error)")
-                            }
-                        }
+                        self.forecast = try await weatherManager.get7DayForecast(
+                            latitude: newWeather.location.lat,
+                            longitude: newWeather.location.lon
+                        )
                     } catch {
                         print("Failed to fetch weather: \(error)")
                     }
                 }
-            })
+            }
             .presentationDetents([.medium])
         }
     }

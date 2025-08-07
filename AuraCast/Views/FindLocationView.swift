@@ -49,7 +49,6 @@ struct FindLocationView: View {
                         .shadow(radius: 5)
                         .padding(.top)
                         
-                    // Use current location
                         .padding(.bottom, 50)
                     Button(action: {
                         locationManager.requestLocation()
