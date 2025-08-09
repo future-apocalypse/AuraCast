@@ -7,6 +7,7 @@
 
 import SwiftUI
 import CoreLocationUI
+import Combine
 
 struct FindLocationView: View {
     @EnvironmentObject var locationManager: LocationManager
@@ -15,6 +16,9 @@ struct FindLocationView: View {
     @State private var isLoading = false
     @State private var fetchFailed = false
     @State private var showWeather = false
+    @State private var hasCheckedLocation = false
+    @State private var locationObserver: AnyCancellable?
+    @State private var authorizationObserver: AnyCancellable?
 
     let weatherManager = WeatherManager()
 
@@ -80,7 +84,65 @@ struct FindLocationView: View {
                 .padding()
             }
         }
+        .onAppear {
+            setupLocationObserver()
+            
+            if !hasCheckedLocation, let location = locationManager.location {
+                hasCheckedLocation = true
+                Task {
+                    await fetchWeatherForLocation(latitude: location.latitude, longitude: location.longitude)
+                }
+            }
+        }
+        .onDisappear {
+            locationObserver?.cancel()
+            authorizationObserver?.cancel()
+        }
     }
+    
+    private func setupLocationObserver() {
+        locationObserver = NotificationCenter.default.publisher(for: .init("LocationUpdated"))
+            .sink { _ in
+                if let location = locationManager.location {
+                    Task {
+                        await fetchWeatherForLocation(latitude: location.latitude, longitude: location.longitude)
+                    }
+                }
+            }
+        
+        authorizationObserver = NotificationCenter.default.publisher(for: .init("LocationAuthorizationChanged"))
+            .sink { _ in
+                if (locationManager.authorizationStatus == .authorizedWhenInUse ||
+                    locationManager.authorizationStatus == .authorizedAlways) && 
+                    locationManager.location != nil {
+                    
+                }
+            }
+    }
+    
+    func fetchWeatherForLocation(latitude: Double, longitude: Double) async {
+        isLoading = true
+        fetchFailed = false
+
+        do {
+            let result = try await weatherManager.getCurrentWeather(
+                latitude: latitude,
+                longitude: longitude
+            )
+            await MainActor.run {
+                self.weather = result
+                self.isLoading = false
+                self.showWeather = true
+            }
+        } catch {
+            print("Error fetching weather by location:", error)
+            await MainActor.run {
+                self.fetchFailed = true
+                self.isLoading = false
+            }
+        }
+    }
+    
     func fetchWeather() async {
         isLoading = true
         fetchFailed = false
@@ -104,4 +166,5 @@ struct FindLocationView: View {
 
 #Preview {
     FindLocationView()
+        .environmentObject(LocationManager())
 }

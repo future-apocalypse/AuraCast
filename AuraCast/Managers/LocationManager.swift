@@ -17,6 +17,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     
     @Published var location: CLLocationCoordinate2D?
     @Published var isLoading = false
+    @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
     
     
     override init() {
@@ -33,9 +34,22 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         location = locations.first?.coordinate
         isLoading = false
+        
+        // Post notification when location is updated
+        NotificationCenter.default.post(name: Notification.Name("LocationUpdated"), object: nil)
     }
     
-    
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        authorizationStatus = status
+        
+        // If authorization was just granted, request location immediately
+        if status == .authorizedWhenInUse || status == .authorizedAlways {
+            manager.requestLocation()
+        }
+        
+        // Post notification about authorization change
+        NotificationCenter.default.post(name: Notification.Name("LocationAuthorizationChanged"), object: nil)
+    }
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: any Error) {
         print("Failed to get location: \(error.localizedDescription)")

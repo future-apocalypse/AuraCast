@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct WeatherView: View {
-    let weather: ResponseBody
+    @State var weather: ResponseBody
     @State private var forecast: ForecastResponse?
     @State private var isSearchPresented = false
     @State private var searchText = ""
@@ -153,6 +153,8 @@ struct WeatherView: View {
                 Task {
                     do {
                         let newWeather = try await weatherManager.getCurrentWeather(forCity: city)
+                        
+                        self.weather = newWeather
                         
                         NotificationCenter.default.post(
                             name: Notification.Name("WeatherUpdated"),

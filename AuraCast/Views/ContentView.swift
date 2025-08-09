@@ -7,16 +7,21 @@
 
 import SwiftUI
 
-import SwiftUI
-
 struct ContentView: View {
+    @AppStorage("hasLaunchedBefore") private var hasLaunchedBefore = false
     @StateObject private var locationManager = LocationManager()
     var weatherManager = WeatherManager()
     @State var weather: ResponseBody?
     
     var body: some View {
         VStack {
-            if let location = locationManager.location {
+            if !hasLaunchedBefore {
+                WelcomeView()
+                    .environmentObject(locationManager)
+                    .onDisappear {
+                        hasLaunchedBefore = true
+                    }
+            } else if let location = locationManager.location {
                 if let weather = weather {
                     WeatherView(weather: weather)
                 } else {
@@ -36,13 +41,17 @@ struct ContentView: View {
                 if locationManager.isLoading {
                     LoadingView()
                 } else {
-                    WelcomeView()
+                    FindLocationView()
                         .environmentObject(locationManager)
                 }
             }
         }
         .onAppear {
             setupWeatherUpdateNotification()
+            
+            if hasLaunchedBefore && locationManager.location == nil {
+                locationManager.requestLocation()
+            }
         }
         .onDisappear {
             NotificationCenter.default.removeObserver(self)
