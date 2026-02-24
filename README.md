@@ -1,7 +1,9 @@
-<p align="left">
-  <img src="Assets/Icon.png" alt="AuraCast Icon" width="80" style="vertical-align: middle;" />
-  <span style="font-size: 28px; font-weight: 700; vertical-align: middle;">&nbsp;&nbsp;AuraCast – Minimal Weather App</span>
-</p>
+<h1>
+  <img src="Assets/Icon.png" width="70" style="vertical-align: baseline;" />
+  AuraCast – Minimal Weather App
+</h1>
+
+---
 
 AuraCast is a minimalistic weather application built with Swift and SwiftUI.  
 The goal of this project was to remove unnecessary complexity found in most modern weather apps and focus only on essential, readable information.
