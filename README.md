@@ -36,3 +36,8 @@ This app was designed and developed as a personal product and portfolio showcase
 - Async/await networking
 - State persistence using `@AppStorage`
 - Custom UI designed entirely in Figma (icons, gradients, layout)
+
+---
+
+## Assets 
+![Figma.png](Assets/Figma.png)
